@@ -1,9 +1,6 @@
 #ifndef PACKET_H
 #define PACKET_H
 
-#include <stdio.h>
-#include <stdlib.h>
-
 typedef enum ProtocolType ProtocolType;
 enum ProtocolType {
     PROTOCOL_TCP = 6,
@@ -28,7 +25,7 @@ struct Packet {
     ProtocolType protocol;
     unsigned char tcp_flags;
     unsigned int payload_size;
-    unsigned char timestamp_ms;
+    unsigned long timestamp_ms;
 };
 
 #endif

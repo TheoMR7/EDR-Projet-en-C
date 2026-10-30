@@ -1,29 +1,33 @@
-CC      = gcc
-CFLAGS  = -Wall -Wextra -Werror -O2 -I./include
+CC = gcc
+CFLAGS = -Wall -Wextra -Werror -O2 -I./include
 LDFLAGS =
 
-SRC_DIR = src
-OBJ_DIR = obj
-BIN     = esgi_edr
+SRCS = $(wildcard src/*.c)
+HEADERS = $(wildcard include/*.h)
+OBJS = $(patsubst src/%.c,obj/%.o,$(SRCS))
 
-SRCS    = $(wildcard $(SRC_DIR)/*.c)
-OBJS    = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
+# Il n'y a pas encore de main dans src : on compile les modules seuls.
+all: $(OBJS)
 
-all: $(BIN)
-
-$(BIN): $(OBJS)
-	$(CC) $(OBJS) -o $(BIN) $(LDFLAGS)
-
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(OBJ_DIR)
+obj/%.o: src/%.c $(HEADERS)
+	@mkdir -p obj
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Petit programme de demonstration du module d'alertes.
+obj/test_alert: tests/test_alert.c obj/alert.o $(HEADERS)
+	$(CC) $(CFLAGS) tests/test_alert.c obj/alert.o -o $@ $(LDFLAGS)
+
+test: all obj/test_alert
+	./obj/test_alert
+
 clean:
-	rm -rf $(OBJ_DIR)
+	rm -f $(OBJS) obj/test_alert
 
 fclean: clean
-	rm -f $(BIN)
+	rm -f esgi_edr
 
-re: fclean all
+re:
+	$(MAKE) fclean
+	$(MAKE) all
 
-.PHONY: all clean fclean re
+.PHONY: all test clean fclean re

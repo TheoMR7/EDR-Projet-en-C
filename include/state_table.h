@@ -15,7 +15,7 @@ unsigned int ip_from_bytes(unsigned char a, unsigned char b, unsigned char c, un
 int ip_from_string(const char * ip_str, unsigned int * out_ip);
 void    ip_to_string(unsigned int ip, char * buffer, int buffer_len);
 
-int ip_tree_instert(IpNode ** root, unsigned int ip, const char * comment);
+int ip_tree_insert(IpNode ** root, unsigned int ip, const char * comment);
 int ip_tree_contains(const IpNode * root, unsigned int ip);
 int ip_tree_remove(IpNode ** root, unsigned int ip);
 void ip_tree_print(const IpNode * root);
