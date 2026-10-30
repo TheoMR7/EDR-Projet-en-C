@@ -6,8 +6,8 @@ SRC_DIR = src
 OBJ_DIR = obj
 BIN     = esgi_edr
 
-SRCS    = $(SRC_DIR)/main.c $(SRC_DIR)/state_table.c
-OBJS    = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+SRCS    = $(wildcard $(SRC_DIR)/*.c)
+OBJS    = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
 all: $(BIN)
 
