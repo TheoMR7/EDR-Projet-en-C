@@ -1,17 +1,13 @@
-# Binaires et bibliothèques
 esgi_edr
 *.so
 *.a
 
-# Fichiers objets
 obj/
 *.o
 
-# Logs et sorties
 logs/*.log
 logs/*.json
 
-# Fichiers temporaires d'éditeurs et système
 *~
 *.swp
 .DS_Store
