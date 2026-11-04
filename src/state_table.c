@@ -7,6 +7,7 @@ unsigned int ip_from_bytes(unsigned char a, unsigned char b, unsigned char c, un
            ((unsigned int)c << 8)  |
            ((unsigned int)d);
 }
+
 int ip_from_string(const char * ip_str, unsigned int * out_ip) {
     unsigned int a, b, c, d;
 
@@ -23,6 +24,7 @@ int ip_from_string(const char * ip_str, unsigned int * out_ip) {
                             (unsigned char)c, (unsigned char)d);
     return 1;
 }
+
 void ip_to_string(unsigned int ip, char * buffer, int buffer_len) {
     unsigned char a, b, c, d;
 
@@ -36,6 +38,7 @@ void ip_to_string(unsigned int ip, char * buffer, int buffer_len) {
 
     snprintf(buffer, (size_t)buffer_len, "%u.%u.%u.%u", a, b, c, d);
 }
+
 int ip_tree_insert(IpNode ** root, unsigned int ip, const char * comment) {
     IpNode * new_node = NULL;
 
@@ -45,7 +48,7 @@ int ip_tree_insert(IpNode ** root, unsigned int ip, const char * comment) {
     if (*root == NULL) {
         new_node = (IpNode *)malloc(sizeof(IpNode));
         if (new_node == NULL) {
-            fprintf(stderr, "Erreur malloc dans ip_tree_insert\n");
+            fprintf(stderr, "Erreur allocation memoire dans ip_tree_insert\n");
             return 0;
         }
         new_node->ip = ip;
@@ -74,6 +77,7 @@ int ip_tree_insert(IpNode ** root, unsigned int ip, const char * comment) {
         return ip_tree_insert(&((*root)->right), ip, comment);
     }
 }
+
 int ip_tree_contains(const IpNode * root, unsigned int ip) {
     const IpNode * current = root;
     while (current != NULL) {
@@ -87,6 +91,7 @@ int ip_tree_contains(const IpNode * root, unsigned int ip) {
     }
     return 0;
 }
+
 static IpNode * find_min_node(IpNode * node) {
     IpNode * current = node;
     while (current != NULL && current->left != NULL) {
@@ -94,6 +99,7 @@ static IpNode * find_min_node(IpNode * node) {
     }
     return current;
 }
+
 int ip_tree_remove(IpNode ** root, unsigned int ip) {
     IpNode * temp = NULL;
 
@@ -110,8 +116,7 @@ int ip_tree_remove(IpNode ** root, unsigned int ip) {
             free(*root);
             *root = temp;
             return 1;
-        }
-        else if ((*root)->right == NULL) {
+        } else if ((*root)->right == NULL) {
             temp = (*root)->left;
             free(*root);
             *root = temp;
@@ -119,10 +124,12 @@ int ip_tree_remove(IpNode ** root, unsigned int ip) {
         }
         temp = find_min_node((*root)->right);
         (*root)->ip = temp->ip;
-        strncpy((*root)->comment, temp->comment, sizeof((*root)->comment));
+        strncpy((*root)->comment, temp->comment, sizeof((*root)->comment) - 1);
+        (*root)->comment[sizeof((*root)->comment) - 1] = '\0';
         return ip_tree_remove(&((*root)->right), temp->ip);
     }
 }
+
 void ip_tree_print(const IpNode * root) {
     char ip_str[16];
 
@@ -134,6 +141,7 @@ void ip_tree_print(const IpNode * root) {
     printf("   - %-15s (%s)\n", ip_str, root->comment);
     ip_tree_print(root->right);
 }
+
 void ip_tree_free(IpNode * root) {
     if (root == NULL) {
         return;
@@ -142,6 +150,7 @@ void ip_tree_free(IpNode * root) {
     ip_tree_free(root->right);
     free(root);
 }
+
 int ip_tree_load_file(IpNode ** root, const char * filepath) {
     FILE * file = NULL;
     char ip_str[32];
@@ -165,6 +174,7 @@ int ip_tree_load_file(IpNode ** root, const char * filepath) {
     fclose(file);
     return count;
 }
+
 static void save_node_recursive(const IpNode * node, FILE * file) {
     char ip_str[16];
 
@@ -176,6 +186,7 @@ static void save_node_recursive(const IpNode * node, FILE * file) {
     fprintf(file, "%s %s\n", ip_str, node->comment);
     save_node_recursive(node->right, file);
 }
+
 int ip_tree_save_file(const IpNode * root, const char * filepath) {
     FILE * file = NULL;
 
@@ -190,6 +201,7 @@ int ip_tree_save_file(const IpNode * root, const char * filepath) {
     fclose(file);
     return 1;
 }
+
 void session_table_init(SessionTable * table) {
     int i;
 
@@ -230,6 +242,7 @@ SessionEntry * session_table_update(SessionTable * table, const Packet * pkt) {
     ++(table->total_packets_processed);
     index = session_hash(pkt->src_ip, pkt->dst_ip, pkt->src_port, pkt->dst_port, pkt->protocol);
     current = table->buckets[index];
+
     while (current != NULL) {
         if (current->src_ip == pkt->src_ip &&
             current->dst_ip == pkt->dst_ip &&
@@ -237,7 +250,6 @@ SessionEntry * session_table_update(SessionTable * table, const Packet * pkt) {
             current->dst_port == pkt->dst_port &&
             current->protocol == pkt->protocol) {
 
-            /* La session existe : on met à jour ses compteurs ! */
             ++(current->packet_count);
             current->total_bytes += pkt->payload_size;
             current->last_seen_ms = pkt->timestamp_ms;
@@ -257,9 +269,10 @@ SessionEntry * session_table_update(SessionTable * table, const Packet * pkt) {
         }
         current = current->next;
     }
+
     new_entry = (SessionEntry *)malloc(sizeof(SessionEntry));
     if (new_entry == NULL) {
-        fprintf(stderr, "Erreur malloc dans session_table_update\n");
+        fprintf(stderr, "Erreur allocation memoire dans session_table_update\n");
         return NULL;
     }
 
@@ -280,12 +293,14 @@ SessionEntry * session_table_update(SessionTable * table, const Packet * pkt) {
         new_entry->state     = STATE_NEW;
         new_entry->syn_count = 0;
     }
+
     new_entry->next = table->buckets[index];
     table->buckets[index] = new_entry;
     ++(table->active_sessions);
 
     return new_entry;
 }
+
 unsigned int session_table_cleanup_expired(SessionTable * table,
                                            unsigned long current_time_ms,
                                            unsigned long timeout_ms) {
@@ -326,6 +341,7 @@ unsigned int session_table_cleanup_expired(SessionTable * table,
     }
     return removed_count;
 }
+
 void session_table_print_summary(const SessionTable * table) {
     int i;
     const SessionEntry * current = NULL;
@@ -346,7 +362,7 @@ void session_table_print_summary(const SessionTable * table) {
             ip_to_string(current->src_ip, src_str, sizeof(src_str));
             ip_to_string(current->dst_ip, dst_str, sizeof(dst_str));
             printf(" %-5d | %-15s:%-5u | %-15s:%-5u | %-7u | %-7lu | %-3u\n",
-                   current->protocol,
+                   (int)current->protocol,
                    src_str, current->src_port,
                    dst_str, current->dst_port,
                    current->packet_count,
@@ -356,6 +372,7 @@ void session_table_print_summary(const SessionTable * table) {
         }
     }
 }
+
 void session_table_free(SessionTable * table) {
     int i;
     SessionEntry * current = NULL;

@@ -13,3 +13,4 @@ logs/*.json
 .DS_Store
 .vscode/
 .idea/
+/alerts.json

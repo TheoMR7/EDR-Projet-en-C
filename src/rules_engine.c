@@ -1,8 +1,6 @@
 /*Implémentation du moteur de règles, réputation et plugins (.so).*/
 
 #include "../include/rules_engine.h"
-#include <stdio.h>
-#include <stdlib.h> 
 #include <string.h>
 #include <dlfcn.h>
 
@@ -12,19 +10,20 @@ static void default_alert_printer(const Alert * alert, void * user_context) {
     const char * sev_str = "INFO";
 
     (void)user_context;
-    if (alert == NULL){
+    if (alert == NULL) {
         return;
     }
-    if(alert->severity == ALERT_WARNING){
+    if (alert->severity == ALERT_WARNING) {
         sev_str = "WARNING";
-    }else if(alert->severity == ALERT_CRITICAL){
+    } else if (alert->severity == ALERT_CRITICAL) {
         sev_str = "CRITICAL";
     }
-    }
+
     ip_to_string(alert->src_ip, src_str, sizeof(src_str));
     ip_to_string(alert->dst_ip, dst_str, sizeof(dst_str));
 
-    printf("[ALERT %s] REGLE: '%s' | %s -> %s | %s\n", sev_str, alert->rule_name, src_str, dst_str, alert->message);
+    printf("[ALERT %s] REGLE: '%s' | %s -> %s | %s\n",
+           sev_str, alert->rule_name, src_str, dst_str, alert->message);
 }
 
 void engine_init(RulesEngine * engine, AlertCallback callback, void * callback_ctx) {
@@ -37,8 +36,9 @@ void engine_init(RulesEngine * engine, AlertCallback callback, void * callback_c
     engine->rules               = NULL;
     engine->rules_len           = 0;
     engine->rules_capacity      = 0;
-    engine->syn_scan_threshold  = 10;        
+    engine->syn_scan_threshold  = 10;
     engine->dos_bytes_threshold = 1000000UL;
+
     if (callback != NULL) {
         engine->on_alert  = callback;
         engine->alert_ctx = callback_ctx;
@@ -46,10 +46,12 @@ void engine_init(RulesEngine * engine, AlertCallback callback, void * callback_c
         engine->on_alert  = default_alert_printer;
         engine->alert_ctx = NULL;
     }
+
     engine_add_rule(engine, "Detection_SYN_Scan", rule_check_syn_scan);
     engine_add_rule(engine, "Detection_Pic_Volumetrique_DoS", rule_check_dos_volume);
     engine_add_rule(engine, "Heuristique_IP_Point10", rule_check_dot10_ip);
 }
+
 int engine_load_configs(RulesEngine * engine, const char * wl_path, const char * bl_path) {
     int wl_count = 0;
     int bl_count = 0;
@@ -65,6 +67,7 @@ int engine_load_configs(RulesEngine * engine, const char * wl_path, const char *
     }
     return (wl_count >= 0 && bl_count >= 0) ? (wl_count + bl_count) : -1;
 }
+
 int engine_add_rule(RulesEngine * engine, const char * name, RuleCheckFunc check_func) {
     DetectionRule * new_array = NULL;
     int new_cap;
@@ -75,7 +78,7 @@ int engine_add_rule(RulesEngine * engine, const char * name, RuleCheckFunc check
     }
     if (engine->rules_len >= engine->rules_capacity) {
         new_cap = (engine->rules_capacity == 0) ? 4 : (engine->rules_capacity * 2);
-        new_array = (DetectionRule *)realloc(engine->rules,(size_t)new_cap * sizeof(DetectionRule));
+        new_array = (DetectionRule *)realloc(engine->rules, (size_t)new_cap * sizeof(DetectionRule));
         if (new_array == NULL) {
             fprintf(stderr, "Erreur realloc dans engine_add_rule\n");
             return 0;
@@ -104,18 +107,20 @@ int engine_load_plugin(RulesEngine * engine, const char * so_filepath, const cha
     if (engine == NULL || so_filepath == NULL || rule_name == NULL) {
         return 0;
     }
-    /* 1. Ouverture de la bibliothèque dynamique .so */
+
     handle = dlopen(so_filepath, RTLD_NOW);
     if (handle == NULL) {
         fprintf(stderr, "Erreur dlopen (%s) : %s\n", so_filepath, dlerror());
         return 0;
     }
+
     *(void **)(&plugin_func) = dlsym(handle, "plugin_check_packet");
     if (plugin_func == NULL) {
         fprintf(stderr, "Erreur dlsym : fonction 'plugin_check_packet' introuvable (%s)\n", dlerror());
         dlclose(handle);
         return 0;
     }
+
     rule_id = engine_add_rule(engine, rule_name, plugin_func);
     if (rule_id == 0) {
         dlclose(handle);
@@ -148,10 +153,10 @@ int engine_inspect_packet(RulesEngine * engine, const Packet * pkt, const Sessio
     if (engine == NULL || pkt == NULL) {
         return 0;
     }
-    if (ip_tree_contains(engine->whitelist, pkt->src_ip)) {
-        return 0; 
-    }
 
+    if (ip_tree_contains(engine->whitelist, pkt->src_ip)) {
+        return 0;
+    }
     if (ip_tree_contains(engine->blacklist, pkt->src_ip)) {
         alert.timestamp_ms = pkt->timestamp_ms;
         alert.src_ip       = pkt->src_ip;
@@ -159,16 +164,14 @@ int engine_inspect_packet(RulesEngine * engine, const Packet * pkt, const Sessio
         alert.severity     = ALERT_CRITICAL;
         strcpy(alert.rule_name, "Filtrage_Reputation_Blacklist");
         snprintf(alert.message, sizeof(alert.message),
-                 "Paquet bloque : l'adresse IP source figure dans l'ABR Blacklist !");
+                 "Paquet bloque : adresse IP source repertoriee dans l'ABR Blacklist");
         engine->on_alert(&alert, engine->alert_ctx);
         return 1;
     }
-
     for (i = 0; i < engine->rules_len; ++i) {
         if (engine->rules[i].enabled && engine->rules[i].check != NULL) {
             memset(&alert, 0, sizeof(Alert));
             if (engine->rules[i].check(pkt, session, &alert)) {
-                /* La règle a levé une alerte ! */
                 engine->on_alert(&alert, engine->alert_ctx);
                 ++alerts_triggered;
 
@@ -229,7 +232,7 @@ int rule_check_dos_volume(const Packet * pkt, const SessionEntry * session, Aler
     if (pkt == NULL || session == NULL || out_alert == NULL) {
         return 0;
     }
-    if (session->total_bytes >= 500000UL) { 
+    if (session->total_bytes >= 500000UL) {
         out_alert->timestamp_ms = pkt->timestamp_ms;
         out_alert->src_ip       = pkt->src_ip;
         out_alert->dst_ip       = pkt->dst_ip;
@@ -262,7 +265,7 @@ int rule_check_dot10_ip(const Packet * pkt, const SessionEntry * session, Alert 
         strcpy(out_alert->rule_name, "Heuristique_IP_Point10");
         snprintf(out_alert->message, sizeof(out_alert->message),
                  "IP suspecte detectee par masque binaire (1er octet=%u, dernier octet=%u)",
-                 first_octet, last_octet);
+                 (unsigned int)first_octet, (unsigned int)last_octet);
         return 1;
     }
     return 0;

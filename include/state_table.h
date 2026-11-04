@@ -62,7 +62,6 @@ void           session_table_init(SessionTable * table);
 unsigned int   session_hash(unsigned int src_ip, unsigned int dst_ip,
                             unsigned short src_port, unsigned short dst_port,
                             ProtocolType proto);
-
 SessionEntry * session_table_update(SessionTable * table, const Packet * pkt);
 unsigned int   session_table_cleanup_expired(SessionTable * table,
                                              unsigned long current_time_ms,
