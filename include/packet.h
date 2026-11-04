@@ -1,3 +1,4 @@
+/*Contrat commun représentant un paquet réseau décodé*/
 #ifndef PACKET_H
 #define PACKET_H
 
@@ -6,10 +7,10 @@
 
 typedef enum ProtocolType ProtocolType;
 enum ProtocolType {
-    PROTOCOL_TCP = 6,
-    PROTOCOL_UDP = 17,
-    PROTOCOL_ICMP = 1,
-    PROTOCOL_UNKNOWN = 0
+    PROTO_UNKNOWN = 0,
+    PROTO_ICMP    = 1,
+    PROTO_TCP     = 6,
+    PROTO_UDP     = 17
 };
 
 #define TCP_FLAG_FIN 0x01
@@ -21,14 +22,14 @@ enum ProtocolType {
 
 typedef struct Packet Packet;
 struct Packet {
-    unsigned int src_ip;
-    unsigned int dst_ip;
+    unsigned int   src_ip;
+    unsigned int   dst_ip;
     unsigned short src_port;
     unsigned short dst_port;
-    ProtocolType protocol;
-    unsigned char tcp_flags;
-    unsigned int payload_size;
-    unsigned char timestamp_ms;
+    ProtocolType   protocol;
+    unsigned char  tcp_flags;
+    unsigned int   payload_size;
+    unsigned long  timestamp_ms;
 };
 
 #endif
