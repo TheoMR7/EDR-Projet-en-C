@@ -3,12 +3,12 @@
 #include "../include/rules_engine.h"
 #include <string.h>
 #include <dlfcn.h>
-
+/* Fonction de rappel par défaut pour l'affichage des alertes sur la sortie standard.*/
 static void default_alert_printer(const Alert * alert, void * user_context) {
     char src_str[16];
     char dst_str[16];
     const char * sev_str = "INFO";
-
+/* Le contexte utilisateur n'est pas utilisé dans cette fonction par défaut.*/
     (void)user_context;
     if (alert == NULL) {
         return;
@@ -25,7 +25,7 @@ static void default_alert_printer(const Alert * alert, void * user_context) {
     printf("[ALERT %s] REGLE: '%s' | %s -> %s | %s\n",
            sev_str, alert->rule_name, src_str, dst_str, alert->message);
 }
-
+/* Fonction de vérification de la règle intégrée pour la détection de scans SYN.*/
 void engine_init(RulesEngine * engine, AlertCallback callback, void * callback_ctx) {
     if (engine == NULL) {
         return;
@@ -46,12 +46,12 @@ void engine_init(RulesEngine * engine, AlertCallback callback, void * callback_c
         engine->on_alert  = default_alert_printer;
         engine->alert_ctx = NULL;
     }
-
+/* Ajout des règles intégrées au moteur de règles.*/
     engine_add_rule(engine, "Detection_SYN_Scan", rule_check_syn_scan);
     engine_add_rule(engine, "Detection_Pic_Volumetrique_DoS", rule_check_dos_volume);
     engine_add_rule(engine, "Heuristique_IP_Point10", rule_check_dot10_ip);
 }
-
+/* Chargement des fichiers de configuration pour la liste blanche et la liste noire.*/
 int engine_load_configs(RulesEngine * engine, const char * wl_path, const char * bl_path) {
     int wl_count = 0;
     int bl_count = 0;
@@ -67,7 +67,7 @@ int engine_load_configs(RulesEngine * engine, const char * wl_path, const char *
     }
     return (wl_count >= 0 && bl_count >= 0) ? (wl_count + bl_count) : -1;
 }
-
+/* Libération des ressources allouées par le moteur de règles.*/
 int engine_add_rule(RulesEngine * engine, const char * name, RuleCheckFunc check_func) {
     DetectionRule * new_array = NULL;
     int new_cap;
@@ -86,7 +86,7 @@ int engine_add_rule(RulesEngine * engine, const char * name, RuleCheckFunc check
         engine->rules = new_array;
         engine->rules_capacity = new_cap;
     }
-
+/* Ajout de la nouvelle règle à la fin du tableau des règles.*/
     rule = &(engine->rules[engine->rules_len]);
     rule->id = engine->rules_len + 1;
     strncpy(rule->name, name, sizeof(rule->name) - 1);
@@ -98,7 +98,7 @@ int engine_add_rule(RulesEngine * engine, const char * name, RuleCheckFunc check
     ++(engine->rules_len);
     return rule->id;
 }
-
+/* Chargement d'un plugin dynamique (.so) et ajout de la règle correspondante au moteur de règles.*/
 int engine_load_plugin(RulesEngine * engine, const char * so_filepath, const char * rule_name) {
     void * handle = NULL;
     RuleCheckFunc plugin_func = NULL;
@@ -113,14 +113,13 @@ int engine_load_plugin(RulesEngine * engine, const char * so_filepath, const cha
         fprintf(stderr, "Erreur dlopen (%s) : %s\n", so_filepath, dlerror());
         return 0;
     }
-
-    *(void **)(&plugin_func) = dlsym(handle, "plugin_check_packet");
+    *(void **)(&plugin_func) = dlsym(handle, "plugin_check_packet"); /* Récupération de la fonction de vérification du plugin dynamique.*/
     if (plugin_func == NULL) {
         fprintf(stderr, "Erreur dlsym : fonction 'plugin_check_packet' introuvable (%s)\n", dlerror());
         dlclose(handle);
         return 0;
     }
-
+    /* Ajout de la règle du plugin au moteur de règles.*/
     rule_id = engine_add_rule(engine, rule_name, plugin_func);
     if (rule_id == 0) {
         dlclose(handle);
@@ -129,7 +128,7 @@ int engine_load_plugin(RulesEngine * engine, const char * so_filepath, const cha
     engine->rules[engine->rules_len - 1].dl_handle = handle;
     return rule_id;
 }
-
+/* Activation ou désactivation d'une règle spécifique dans le moteur de règles.*/
 int engine_set_rule_state(RulesEngine * engine, int rule_id, int enabled) {
     int i;
 
@@ -144,7 +143,7 @@ int engine_set_rule_state(RulesEngine * engine, int rule_id, int enabled) {
     }
     return 0;
 }
-
+/* Inspection d'un paquet réseau en utilisant le moteur de règles et génération d'alertes si nécessaire.*/
 int engine_inspect_packet(RulesEngine * engine, const Packet * pkt, const SessionEntry * session) {
     int i;
     int alerts_triggered = 0;
@@ -157,6 +156,7 @@ int engine_inspect_packet(RulesEngine * engine, const Packet * pkt, const Sessio
     if (ip_tree_contains(engine->whitelist, pkt->src_ip)) {
         return 0;
     }
+    /* Vérification de la présence de l'adresse IP source dans la liste noire (blacklist).*/
     if (ip_tree_contains(engine->blacklist, pkt->src_ip)) {
         alert.timestamp_ms = pkt->timestamp_ms;
         alert.src_ip       = pkt->src_ip;
@@ -183,7 +183,7 @@ int engine_inspect_packet(RulesEngine * engine, const Packet * pkt, const Sessio
     }
     return alerts_triggered;
 }
-
+/* Libération des ressources allouées par le moteur de règles.*/
 void engine_free(RulesEngine * engine) {
     int i;
 
@@ -207,7 +207,7 @@ void engine_free(RulesEngine * engine) {
     engine->rules_len = 0;
     engine->rules_capacity = 0;
 }
-
+/* Fonction de vérification de la règle intégrée pour la détection de scans SYN.*/
 int rule_check_syn_scan(const Packet * pkt, const SessionEntry * session, Alert * out_alert) {
     if (pkt == NULL || session == NULL || out_alert == NULL) {
         return 0;
@@ -227,7 +227,7 @@ int rule_check_syn_scan(const Packet * pkt, const SessionEntry * session, Alert 
     }
     return 0;
 }
-
+/* Fonction de vérification de la règle intégrée pour la détection d'attaques volumétriques (DoS).*/
 int rule_check_dos_volume(const Packet * pkt, const SessionEntry * session, Alert * out_alert) {
     if (pkt == NULL || session == NULL || out_alert == NULL) {
         return 0;
@@ -245,7 +245,7 @@ int rule_check_dos_volume(const Packet * pkt, const SessionEntry * session, Aler
     }
     return 0;
 }
-
+/* Fonction de vérification de la règle intégrée pour la détection d'adresses IP suspectes en .10.*/
 int rule_check_dot10_ip(const Packet * pkt, const SessionEntry * session, Alert * out_alert) {
     unsigned char first_octet;
     unsigned char last_octet;

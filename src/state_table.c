@@ -1,13 +1,13 @@
 #include "../include/state_table.h"
 #include <string.h>
-
+/* Fonction de conversion d'une adresse IP en format binaire (4 octets) à partir de 4 octets séparés.*/
 unsigned int ip_from_bytes(unsigned char a, unsigned char b, unsigned char c, unsigned char d) {
     return ((unsigned int)a << 24) |
            ((unsigned int)b << 16) |
            ((unsigned int)c << 8)  |
            ((unsigned int)d);
 }
-
+/* Fonction de conversion d'une chaîne de caractères représentant une adresse IP en format binaire (4 octets).*/
 int ip_from_string(const char * ip_str, unsigned int * out_ip) {
     unsigned int a, b, c, d;
 
@@ -24,7 +24,7 @@ int ip_from_string(const char * ip_str, unsigned int * out_ip) {
                             (unsigned char)c, (unsigned char)d);
     return 1;
 }
-
+/* Fonction de conversion d'une adresse IP en format binaire (4 octets) vers une chaîne de caractères.*/
 void ip_to_string(unsigned int ip, char * buffer, int buffer_len) {
     unsigned char a, b, c, d;
 
@@ -38,7 +38,7 @@ void ip_to_string(unsigned int ip, char * buffer, int buffer_len) {
 
     snprintf(buffer, (size_t)buffer_len, "%u.%u.%u.%u", a, b, c, d);
 }
-
+/* Fonction d'insertion d'une adresse IP dans l'arbre binaire de recherche (ABR) avec un commentaire associé.*/
 int ip_tree_insert(IpNode ** root, unsigned int ip, const char * comment) {
     IpNode * new_node = NULL;
 
@@ -53,7 +53,7 @@ int ip_tree_insert(IpNode ** root, unsigned int ip, const char * comment) {
         }
         new_node->ip = ip;
         if (comment != NULL) {
-            strncpy(new_node->comment, comment, sizeof(new_node->comment) - 1);
+            strncpy(new_node->comment, comment, sizeof(new_node->comment) - 1); /* Copie sécurisée anti-buffer overflow */
             new_node->comment[sizeof(new_node->comment) - 1] = '\0';
         } else {
             strcpy(new_node->comment, "N/A");
@@ -63,7 +63,7 @@ int ip_tree_insert(IpNode ** root, unsigned int ip, const char * comment) {
         *root = new_node;
         return 1;
     }
-
+/* Si l'adresse IP existe déjà, on met à jour le commentaire.*/
     if (ip == (*root)->ip) {
         if (comment != NULL) {
             strncpy((*root)->comment, comment, sizeof((*root)->comment) - 1);
@@ -77,7 +77,7 @@ int ip_tree_insert(IpNode ** root, unsigned int ip, const char * comment) {
         return ip_tree_insert(&((*root)->right), ip, comment);
     }
 }
-
+/* Fonction de vérification de la présence d'une adresse IP dans l'arbre binaire de recherche (ABR).*/
 int ip_tree_contains(const IpNode * root, unsigned int ip) {
     const IpNode * current = root;
     while (current != NULL) {
@@ -91,7 +91,7 @@ int ip_tree_contains(const IpNode * root, unsigned int ip) {
     }
     return 0;
 }
-
+/* Fonction de suppression d'une adresse IP de l'arbre binaire de recherche (ABR).*/
 static IpNode * find_min_node(IpNode * node) {
     IpNode * current = node;
     while (current != NULL && current->left != NULL) {
@@ -99,7 +99,7 @@ static IpNode * find_min_node(IpNode * node) {
     }
     return current;
 }
-
+/* Fonction de suppression d'une adresse IP de l'arbre binaire de recherche (ABR).*/
 int ip_tree_remove(IpNode ** root, unsigned int ip) {
     IpNode * temp = NULL;
 
@@ -114,7 +114,7 @@ int ip_tree_remove(IpNode ** root, unsigned int ip) {
         if ((*root)->left == NULL) {
             temp = (*root)->right;
             free(*root);
-            *root = temp;
+            *root = temp; /*Met à jour le pointeur du parent pour pointer vers le sous-arbre droit*/
             return 1;
         } else if ((*root)->right == NULL) {
             temp = (*root)->left;
@@ -129,7 +129,7 @@ int ip_tree_remove(IpNode ** root, unsigned int ip) {
         return ip_tree_remove(&((*root)->right), temp->ip);
     }
 }
-
+/* Fonction d'affichage des adresses IP dans l'arbre binaire de recherche (ABR) par ordre croissant.*/
 void ip_tree_print(const IpNode * root) {
     char ip_str[16];
 
@@ -150,7 +150,7 @@ void ip_tree_free(IpNode * root) {
     ip_tree_free(root->right);
     free(root);
 }
-
+/* Fonction de chargement des adresses IP à partir d'un fichier. */
 int ip_tree_load_file(IpNode ** root, const char * filepath) {
     FILE * file = NULL;
     char ip_str[32];
@@ -174,7 +174,7 @@ int ip_tree_load_file(IpNode ** root, const char * filepath) {
     fclose(file);
     return count;
 }
-
+/* Fonction de sauvegarde des adresses IP dans un fichier. */
 static void save_node_recursive(const IpNode * node, FILE * file) {
     char ip_str[16];
 
@@ -186,7 +186,7 @@ static void save_node_recursive(const IpNode * node, FILE * file) {
     fprintf(file, "%s %s\n", ip_str, node->comment);
     save_node_recursive(node->right, file);
 }
-
+/* Fonction de sauvegarde des adresses IP dans un fichier. */
 int ip_tree_save_file(const IpNode * root, const char * filepath) {
     FILE * file = NULL;
 
@@ -201,7 +201,7 @@ int ip_tree_save_file(const IpNode * root, const char * filepath) {
     fclose(file);
     return 1;
 }
-
+/* Initialisation de la table d'état des sessions réseau.*/
 void session_table_init(SessionTable * table) {
     int i;
 
@@ -214,7 +214,7 @@ void session_table_init(SessionTable * table) {
     table->active_sessions = 0;
     table->total_packets_processed = 0;
 }
-
+/* Fonction de hachage pour générer un index dans la table d'état des sessions réseau.*/
 unsigned int session_hash(unsigned int src_ip, unsigned int dst_ip,
                           unsigned short src_port, unsigned short dst_port,
                           ProtocolType proto) {
@@ -229,7 +229,7 @@ unsigned int session_hash(unsigned int src_ip, unsigned int dst_ip,
 
     return hash % HASH_TABLE_SIZE;
 }
-
+/* Fonction de mise à jour de la table d'état des sessions réseau avec un nouveau paquet.*/
 SessionEntry * session_table_update(SessionTable * table, const Packet * pkt) {
     unsigned int index;
     SessionEntry * current = NULL;
@@ -238,7 +238,7 @@ SessionEntry * session_table_update(SessionTable * table, const Packet * pkt) {
     if (table == NULL || pkt == NULL) {
         return NULL;
     }
-
+/* Incrémente le compteur total de paquets traités.*/
     ++(table->total_packets_processed);
     index = session_hash(pkt->src_ip, pkt->dst_ip, pkt->src_port, pkt->dst_port, pkt->protocol);
     current = table->buckets[index];
@@ -275,7 +275,7 @@ SessionEntry * session_table_update(SessionTable * table, const Packet * pkt) {
         fprintf(stderr, "Erreur allocation memoire dans session_table_update\n");
         return NULL;
     }
-
+/* Initialisation des champs de la nouvelle entrée de session.*/
     new_entry->src_ip        = pkt->src_ip;
     new_entry->dst_ip        = pkt->dst_ip;
     new_entry->src_port      = pkt->src_port;
@@ -300,7 +300,7 @@ SessionEntry * session_table_update(SessionTable * table, const Packet * pkt) {
 
     return new_entry;
 }
-
+/* Fonction de nettoyage des sessions expirées dans la table d'état des sessions réseau.*/
 unsigned int session_table_cleanup_expired(SessionTable * table,
                                            unsigned long current_time_ms,
                                            unsigned long timeout_ms) {
@@ -341,7 +341,7 @@ unsigned int session_table_cleanup_expired(SessionTable * table,
     }
     return removed_count;
 }
-
+/* Fonction d'affichage d'un résumé de la table d'état des sessions réseau.*/
 void session_table_print_summary(const SessionTable * table) {
     int i;
     const SessionEntry * current = NULL;
@@ -351,6 +351,7 @@ void session_table_print_summary(const SessionTable * table) {
     if (table == NULL) {
         return;
     }
+    /* Affiche un en-tête pour le résumé de la table d'état des sessions réseau.*/
     printf("--- TABLE D'ETAT DES CONNEXIONS (%u sessions actives | %lu paquets) ---\n",
            table->active_sessions, table->total_packets_processed);
     printf(" PROTO | SOURCE                | DESTINATION           | PAQUETS | OCTETS  | SYN\n");
@@ -372,7 +373,7 @@ void session_table_print_summary(const SessionTable * table) {
         }
     }
 }
-
+/* Fonction de libération de la mémoire allouée pour la table d'état des sessions réseau.*/
 void session_table_free(SessionTable * table) {
     int i;
     SessionEntry * current = NULL;
