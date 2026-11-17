@@ -4,22 +4,22 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-/* Énumération des protocoles de la couche Transport / Réseau*/
+
 typedef enum ProtocolType ProtocolType;
 enum ProtocolType {
-    PROTO_UNKNOWN = 0,  
+    PROTO_UNKNOWN = 0,
     PROTO_ICMP    = 1,
     PROTO_TCP     = 6,
     PROTO_UDP     = 17
 };
-/* Définition des flags TCP (Transmission Control Protocol)*/
+
 #define TCP_FLAG_FIN 0x01
 #define TCP_FLAG_SYN 0x02
 #define TCP_FLAG_RST 0x04
 #define TCP_FLAG_PSH 0x08
 #define TCP_FLAG_ACK 0x10
 #define TCP_FLAG_URG 0x20
-/* Structure représentant un paquet réseau décodé (IP, TCP/UDP, etc.)*/
+
 typedef struct Packet Packet;
 struct Packet {
     unsigned int   src_ip;
