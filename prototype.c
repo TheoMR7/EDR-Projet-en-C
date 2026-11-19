@@ -1,3 +1,12 @@
+/*
+ * prototype.c
+ * -----------
+ * Programme autonome de demonstration de la capture de paquets sous Linux.
+ * Il ouvre un socket brut, decode certaines trames Ethernet/IPv4
+ * TCP/UDP et affiche les ports, les adresses IP et les octets recueillis.
+ * Ce prototype ne represente pas encore l'application principale integree.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

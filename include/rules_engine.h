@@ -1,4 +1,10 @@
-/*Moteur de règles modulaire, pointeurs de fonctions et plugins (.so).*/
+/*
+ * rules_engine.h
+ * --------------
+ * Moteur de regles modulaire, pointeurs de fonctions et plugins dynamiques.
+ * Ce fichier expose la structure interne du moteur et toutes ses operations
+ * publiques: ajout de regles, chargement de plugins et inspection de paquets.
+ */
 #ifndef RULES_ENGINE_H
 #define RULES_ENGINE_H
 

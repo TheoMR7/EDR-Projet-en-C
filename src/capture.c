@@ -1,8 +1,17 @@
+/*
+ * capture.c
+ * ---------
+ * Module de capture de paquets en mode brut sous Linux.
+ * Il ouvre un socket AF_PACKET, recoit les trames Ethernet, selectionne les
+ * paquets IPv4 TCP/UDP et extrait les informations utiles dans Packet.
+ */
+
 #include <capture.h>
 #include <packet.h>
 #include <state_table.h>
 
 static void hex_dump(const unsigned char *buf, ssize_t len) {
+    /* Affiche seize octets par ligne pour rendre le contenu brut lisible. */
     for (ssize_t i = 0; i < len; i++){
         printf("%02x ", buf[i]);
         if ((i + 1) % 16 == 0) {
@@ -13,6 +22,7 @@ static void hex_dump(const unsigned char *buf, ssize_t len) {
 }
 
 int capture_debug_run(void) {
+    /* Variables du socket, de la taille recue et des champs extrais des paquets. */
 	int socket_fd;
 	ssize_t data_size;
     unsigned char buffer[BUFFER_SIZE];

@@ -1,4 +1,10 @@
-/*Extension dynamique (.so) pour le filtrage heuristique des adresses IP en .10.*/
+/*
+ * rules_dot10.c
+ * -------------
+ * Extension dynamique (.so) pour le filtrage heuristique des adresses IPv4
+ * dont le premier ou le dernier octet vaut 10.
+ * Le moteur charge plugin_check_packet() avec dlopen() et dlsym().
+ */
 #include "../include/packet.h"
 #include "../include/state_table.h"
 #include "../include/rules_engine.h"

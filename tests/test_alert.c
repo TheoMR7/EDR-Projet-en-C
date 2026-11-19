@@ -1,4 +1,10 @@
-
+/*
+ * test_alert.c
+ * ------------
+ * Petit programme de demonstration du module alert.
+ * Il construit une alerte critique fictive, l'affiche dans le terminal,
+ * puis tente de l'ajouter au fichier JSON Lines alerts.json.
+ */
 #include <stdio.h>
 #include <time.h>
 #include "alert.h"

@@ -1,3 +1,11 @@
+/*
+ * state_table.c
+ * -------------
+ * Implementation des structures de suivi IP et des sessions reseau.
+ * Ce fichier fournit les conversions IPv4, l'arbre binaire whitelist/blacklist,
+ * la table de hachage des sessions et les fonctions de nettoyage memoire.
+ */
+
 #include "../include/state_table.h"
 #include <string.h>
 /* Fonction de conversion d'une adresse IP en format binaire (4 octets) à partir de 4 octets séparés.*/

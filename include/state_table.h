@@ -1,4 +1,9 @@
-/*Arbre Binaire (Whitelist/Blacklist) et Table de Hachage des flux*/
+/*
+ * state_table.h
+ * -------------
+ * Declarations pour l'arbre binaire des adresses IP et la table de hachage
+ * permettant de suivre les flux reseau et leur evolution dans le temps.
+ */
 #ifndef STATE_TABLE_H
 #define STATE_TABLE_H
 

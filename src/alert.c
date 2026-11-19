@@ -1,4 +1,12 @@
+/*
+ * alert.c
+ * -------
+ * Implementation du module de gestion des alertes.
+ * Ce fichier convertit les niveaux de gravite en texte, affiche une alerte
+ * lisible dans le terminal et journalise son contenu au format JSON Lines.
+ */
 
+/* Entrées/sorties standard, horloge Unix et declarations du projet. */
 #include <stdio.h>
 #include <time.h>
 #include "alert.h"
@@ -6,6 +14,7 @@
 
 static const char *alert_severity_text(AlertSeverity severity)
 {
+    /* Le code numerique est traduit en etiquette lisible pour les journaux. */
     switch (severity) {
         case ALERT_INFO:
             return "INFO";
@@ -23,6 +32,7 @@ static const char *alert_severity_text(AlertSeverity severity)
 
 void alert_print(Alert alert)
 {
+    /* Tampons destines a la date, puis aux adresses IP converties en texte. */
     char date[32];
     char src[16];
     char dst[16];
@@ -53,6 +63,7 @@ void alert_print(Alert alert)
 
 static void json_write_string(FILE *file, const char text[])
 {
+    /* Echappe les caracteres speciaux afin de produire une chaine JSON valide. */
     int i;
     unsigned char character;
 
@@ -80,6 +91,7 @@ static void json_write_string(FILE *file, const char text[])
 
 int alert_log_json(Alert alert, const char filepath[])
 {
+    /* Ouvre le journal en ajout pour conserver les alertes precedentes. */
     FILE *file;
     int success = 1;
 
@@ -131,6 +143,7 @@ int alert_log_json(Alert alert, const char filepath[])
 
 void alert_callback_json(const Alert *alert, void *user_context)
 {
+    /* user_context contient facultativement le chemin du fichier JSON. */
     const char *filepath = (const char *)user_context;
 
     if (alert == NULL) {

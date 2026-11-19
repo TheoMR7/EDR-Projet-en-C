@@ -1,4 +1,10 @@
-/*Implémentation du moteur de règles, réputation et plugins (.so).*/
+/*
+ * rules_engine.c
+ * --------------
+ * Implementation du moteur de regles, de la reputation IP et des plugins .so.
+ * Il initialise les regles integrees, charge les configurations, charge des
+ * modules dynamiques et inspecte chaque paquet par rapport aux regles actives.
+ */
 
 #include "../include/rules_engine.h"
 #include <string.h>
