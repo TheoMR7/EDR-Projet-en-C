@@ -5,7 +5,9 @@
 
 void effacer_terminal(void)
 {
-    system("clear");
+    if (system("clear") == -1) {
+        printf("Erreur lors de l'effacement du terminal.\n");
+    }
 }
 
 void attendre_entree(void)
@@ -55,7 +57,10 @@ void gerer_menu(void)
                 char reponse;
 
                 printf("Etes-vous sur ? [Y/N] : ");
-                scanf(" %c", &reponse);
+                if (scanf(" %c", &reponse) != 1) {
+                    printf("Saisie invalide.\n");
+                    return;
+                }
 
                 if (reponse == 'y' || reponse == 'Y') {
                     effacer_terminal();

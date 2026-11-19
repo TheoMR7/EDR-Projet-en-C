@@ -124,7 +124,10 @@ int ip_tree_remove(IpNode ** root, unsigned int ip) {
         }
         temp = find_min_node((*root)->right);
         (*root)->ip = temp->ip;
-        strncpy((*root)->comment, temp->comment, sizeof((*root)->comment) - 1);
+        snprintf((*root)->comment,
+            sizeof((*root)->comment),
+            "%s",
+            temp->comment);
         (*root)->comment[sizeof((*root)->comment) - 1] = '\0';
         return ip_tree_remove(&((*root)->right), temp->ip);
     }
