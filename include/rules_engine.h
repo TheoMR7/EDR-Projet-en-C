@@ -4,23 +4,8 @@
 
 #include "packet.h"
 #include "state_table.h"
-/* Niveau de sévérité des alertes générées par les règles.*/
-typedef enum AlertSeverity AlertSeverity;
-enum AlertSeverity {
-    ALERT_INFO     = 1,
-    ALERT_WARNING  = 2,
-    ALERT_CRITICAL = 3
-};
-/* Structure représentant une alerte générée par une règle.*/
-typedef struct Alert Alert;
-struct Alert {
-    unsigned long timestamp_ms;
-    unsigned int  src_ip;
-    unsigned int  dst_ip;
-    AlertSeverity severity;
-    char          rule_name[64];
-    char          message[256];
-};
+#include "alert.h"
+
 /* Définition du type de fonction de rappel pour la gestion des alertes.*/
 typedef int (*RuleCheckFunc)(const Packet * pkt, const SessionEntry * session, Alert * out_alert);
 

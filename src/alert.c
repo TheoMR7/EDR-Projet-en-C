@@ -1,26 +1,56 @@
+
 #include <stdio.h>
+#include <time.h>
 #include "alert.h"
+#include "state_table.h"
+
+static const char *alert_severity_text(AlertSeverity severity)
+{
+    switch (severity) {
+        case ALERT_INFO:
+            return "INFO";
+
+        case ALERT_WARNING:
+            return "WARNING";
+
+        case ALERT_CRITICAL:
+            return "CRITICAL";
+
+        default:
+            return "UNKNOWN";
+    }
+}
 
 void alert_print(Alert alert)
 {
     char date[32];
-    struct tm *local_time;
+    char src[16];
+    char dst[16];
 
-    /* Ces deux fonctions transforment la date en texte lisible. */
-    local_time = localtime(&alert.timestamp);
+    time_t seconds = (time_t)(alert.timestamp_ms / 1000UL);
+    struct tm *local_time = localtime(&seconds);
+
     if (local_time == NULL) {
         return;
     }
 
-    if (strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", local_time) == 0) {
+    if (strftime(date, sizeof(date),
+                 "%Y-%m-%d %H:%M:%S", local_time) == 0) {
         return;
     }
 
-    printf("[%s] [%s] %s | Source : %s | Destination : %s\n",
-           date, alert.severity, alert.message, alert.src_ip, alert.dst_ip);
+    ip_to_string(alert.src_ip, src, sizeof(src));
+    ip_to_string(alert.dst_ip, dst, sizeof(dst));
+
+    printf("[%s] [%s] %s\n",
+           date, alert_severity_text(alert.severity),
+           alert.message);
+
+    printf("Regle : %s\n", alert.rule_name);
+    printf("Source : %s\n", src);
+    printf("Destination : %s\n", dst);
 }
 
-/* Fonction interne : ecrit du texte entre guillemets au format JSON. */
 static void json_write_string(FILE *file, const char text[])
 {
     int i;
@@ -33,12 +63,14 @@ static void json_write_string(FILE *file, const char text[])
 
         if (character == '"') {
             fputs("\\\"", file);
-        } else if (character == '\\') {
+        }
+        else if (character == '\\') {
             fputs("\\\\", file);
-        } else if (character < 32) {
-            /* En JSON, les caracteres de controle doivent etre codes. */
+        }
+        else if (character < 32) {
             fprintf(file, "\\u%04x", (unsigned int)character);
-        } else {
+        }
+        else {
             fputc(character, file);
         }
     }
@@ -51,40 +83,65 @@ int alert_log_json(Alert alert, const char filepath[])
     FILE *file;
     int success = 1;
 
+    char src[16];
+    char dst[16];
+
     if (filepath == NULL) {
         return 0;
     }
 
-    /* Le mode "a" ajoute les alertes sans effacer les precedentes. */
     file = fopen(filepath, "a");
+
     if (file == NULL) {
         return 0;
     }
 
-    /* Une alerte est un objet JSON, ecrit sur une seule ligne. */
-    fprintf(file, "{\"timestamp\":%lld", (long long)alert.timestamp);
+    ip_to_string(alert.src_ip, src, sizeof(src));
+    ip_to_string(alert.dst_ip, dst, sizeof(dst));
+
+    fprintf(file, "{\"timestamp_ms\":%lu", alert.timestamp_ms);
 
     fprintf(file, ",\"severity\":");
-    json_write_string(file, alert.severity);
+    json_write_string(file, alert_severity_text(alert.severity));
 
     fprintf(file, ",\"src_ip\":");
-    json_write_string(file, alert.src_ip);
+    json_write_string(file, src);
 
     fprintf(file, ",\"dst_ip\":");
-    json_write_string(file, alert.dst_ip);
+    json_write_string(file, dst);
+
+    fprintf(file, ",\"rule_name\":");
+    json_write_string(file, alert.rule_name);
 
     fprintf(file, ",\"message\":");
     json_write_string(file, alert.message);
 
     fprintf(file, "}\n");
 
-    /* On verifie les ecritures, puis on ferme toujours le fichier. */
     if (ferror(file)) {
         success = 0;
     }
+
     if (fclose(file) != 0) {
         success = 0;
     }
 
     return success;
+}
+
+void alert_callback_json(const Alert *alert, void *user_context)
+{
+    const char *filepath = (const char *)user_context;
+
+    if (alert == NULL) {
+        return;
+    }
+
+    alert_print(*alert);
+
+    if (filepath != NULL) {
+        if (alert_log_json(*alert, filepath) == 0) {
+            fprintf(stderr, "Erreur d'enregistrement de l'alerte.\n");
+        }
+    }
 }

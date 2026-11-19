@@ -14,8 +14,8 @@ obj/%.o: src/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Petit programme de demonstration du module d'alertes.
-obj/test_alert: tests/test_alert.c obj/alert.o $(HEADERS)
-	$(CC) $(CFLAGS) tests/test_alert.c obj/alert.o -o $@ $(LDFLAGS)
+obj/test_alert: tests/test_alert.c obj/alert.o obj/state_table.o $(HEADERS)
+	$(CC) $(CFLAGS) tests/test_alert.c obj/alert.o obj/state_table.o -o $@ $(LDFLAGS)
 
 test: all obj/test_alert
 	./obj/test_alert

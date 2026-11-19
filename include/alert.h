@@ -1,22 +1,25 @@
+
 #ifndef ALERT_H
 #define ALERT_H
 
-#include <time.h>
+typedef enum AlertSeverity {
+    ALERT_INFO = 1,
+    ALERT_WARNING = 2,
+    ALERT_CRITICAL = 3
+} AlertSeverity;
 
-typedef struct Alert Alert;
+typedef struct Alert {
+    unsigned long timestamp_ms;
+    unsigned int src_ip;
+    unsigned int dst_ip;
+    AlertSeverity severity;
+    char rule_name[64];
+    char message[256];
+} Alert;
 
-struct Alert {
-    time_t timestamp;
-    char severity[16];
-    char src_ip[16];
-    char dst_ip[16];
-    char message[128];
-};
-
-/* On transmet directement l'alerte aux fonctions. */
 void alert_print(Alert alert);
-
-/* Renvoie 1 si l'enregistrement reussit, sinon 0. */
 int alert_log_json(Alert alert, const char filepath[]);
+
+void alert_callback_json(const Alert *alert, void *user_context);
 
 #endif
