@@ -12,4 +12,5 @@
 
 #define BUFFER_SIZE 65536
 
+int capture_debug_run(void);
 #endif

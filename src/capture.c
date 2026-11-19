@@ -12,7 +12,7 @@ static void hex_dump(const unsigned char *buf, ssize_t len) {
     printf("\n");
 }
 
-int main(void) {
+int capture_debug_run(void) {
 	int socket_fd;
 	ssize_t data_size;
     unsigned char buffer[BUFFER_SIZE];

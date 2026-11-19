@@ -1,13 +1,16 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -O2 -I./include
-LDFLAGS =
+LDFLAGS = -ldl
 
 SRCS = $(wildcard src/*.c)
 HEADERS = $(wildcard include/*.h)
 OBJS = $(patsubst src/%.c,obj/%.o,$(SRCS))
 
-# Il n'y a pas encore de main dans src : on compile les modules seuls.
-all: $(OBJS)
+# Compilation de l'EDR complet.
+all: esgi_edr
+
+esgi_edr: $(OBJS)
+	$(CC) $(OBJS) -o $@ $(LDFLAGS)
 
 obj/%.o: src/%.c $(HEADERS)
 	@mkdir -p obj
